@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "forestry",
+  "version": "${version}",
+  "mixins": [
+    "forestry.mixins.json"
+  ],
+  "entrypoints": {
+    "main": [
+      "forestry.Forestry::initialize"
+    ],
+    "client": [
+      "forestry.client.ForestryClient::initialize"
+    ]
+  },
+  "name": "Forestry",
+  "description": "Trees, bees and more.",
+  "authors": [
+    "SirSengir",
+    "mezz",
+    "Nedelosk",
+    "ramidzkh"
+  ],
+  "license": [
+    "LGPL-3.0-or-later"
+  ]
+}

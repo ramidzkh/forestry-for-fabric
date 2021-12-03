@@ -9,7 +9,14 @@ players to experiment with a classic mod again, while also bringing new contribu
 only modding platform I've seriously used, but I'm open to maintaining a Forge version of this if I ever reach a stable
 state on Fabric and there is enough demand. If someone else does a Forge port of this, I'll happily link it here.
 
-# License and credits
+## Code style
+
+I'm going to be pretty lax - using IntelliJ defaults are best, but I require spaces so when I inevitably reformat
+everything I don't end up in the blame.
+
+Annotate everything in the client package with `@Environment(EnvType.CLIENT)`. Follow the current Mixin structure.
+
+## License and credits
 
 Forestry is under the [GNU Lesser General Public License v3.0 or later][lgpl]. Forestry is a mod originally by SirSengir
 and a lot of other contributors, please see [this page][contributors] for a list of people you should be thankful to!
