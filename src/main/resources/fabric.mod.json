@@ -11,6 +11,9 @@
     ],
     "client": [
       "forestry.client.ForestryClient::initialize"
+    ],
+    "fabric-datagen": [
+      "forestry.data.ForestryDataGenerator::initialize"
     ]
   },
   "name": "Forestry",

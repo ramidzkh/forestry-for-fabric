@@ -6,12 +6,34 @@ plugins {
 group = "me.ramidzkh"
 version = "1.0.0-SNAPSHOT"
 
+sourceSets {
+    main {
+        resources {
+            srcDir("src/main/generated")
+        }
+    }
+}
+
 dependencies {
     minecraft("net.minecraft", "minecraft", "1.18")
     mappings("net.fabricmc", "yarn", "1.18+build.1", classifier = "v2")
     modImplementation("net.fabricmc", "fabric-loader", "0.12.8")
 
-    modImplementation("net.fabricmc.fabric-api", "fabric-api", "0.43.1+1.18")
+    modImplementation("net.fabricmc.fabric-api", "fabric-api", "0.44.0+1.18")
+}
+
+loom {
+    runs {
+        create("datagen") {
+            client()
+
+            configName = "Data Generation"
+            runDir = "build/datagen"
+
+            vmArg("-Dfabric-api.datagen")
+            vmArg("-Dfabric-api.datagen.output-dir=${file("src/main/generated")}")
+        }
+    }
 }
 
 java {
@@ -39,6 +61,11 @@ tasks {
 
     jar {
         from(rootProject.file("LICENSE"))
+    }
+
+    assemble {
+        val runDatagen by this@tasks
+        dependsOn(runDatagen)
     }
 }
 
