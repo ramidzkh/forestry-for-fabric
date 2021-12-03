@@ -1,5 +1,6 @@
 package forestry;
 
+import forestry.recipe.ForestryRecipes;
 import net.minecraft.util.Identifier;
 
 public class Forestry {
@@ -15,5 +16,6 @@ public class Forestry {
     }
 
     public static void initialize() {
+        ForestryRecipes.initialize();
     }
 }

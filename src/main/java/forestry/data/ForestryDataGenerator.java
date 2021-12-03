@@ -6,5 +6,6 @@ public class ForestryDataGenerator {
 
     public static void initialize(FabricDataGenerator dataGenerator) {
         dataGenerator.addProvider(ForestryRecipeProvider::new);
+        dataGenerator.addProvider(ForestryMachineRecipeProvider::new);
     }
 }
