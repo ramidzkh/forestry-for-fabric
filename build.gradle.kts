@@ -20,6 +20,11 @@ dependencies {
     modImplementation("net.fabricmc", "fabric-loader", "0.12.8")
 
     modImplementation("net.fabricmc.fabric-api", "fabric-api", "0.44.0+1.18")
+    modImplementation("teamreborn", "energy", "2.0.0-beta1") {
+        exclude(group = "net.fabricmc.fabric-api")
+    }
+
+    include("teamreborn", "energy", "2.0.0-beta1")
 }
 
 loom {
@@ -47,10 +52,6 @@ tasks {
         options.release.set(17)
     }
 
-    withType<AbstractArchiveTask> {
-        from(rootProject.file("LICENSE"))
-    }
-
     processResources {
         inputs.property("version", project.version)
 
@@ -60,7 +61,7 @@ tasks {
     }
 
     jar {
-        from(rootProject.file("LICENSE"))
+        from(project.file("LICENSE"))
     }
 
     assemble {

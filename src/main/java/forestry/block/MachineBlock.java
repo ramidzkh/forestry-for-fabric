@@ -32,6 +32,8 @@ public abstract class MachineBlock<T extends MachineBlockEntity> extends BlockWi
     @Nullable
     @Override
     public <B extends BlockEntity> BlockEntityTicker<B> getTicker(World world, BlockState state, BlockEntityType<B> type) {
-        return world.isClient() ? null : checkType(type, getType(), (w, blockPos, blockState, e) -> e.tick(w, blockPos, blockState));
+        return world.isClient() ? null : checkType(type, getType(), (w, blockPos, blockState, entity) -> {
+            entity.tick(w, blockPos, blockState);
+        });
     }
 }

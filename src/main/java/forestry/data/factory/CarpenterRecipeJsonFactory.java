@@ -1,4 +1,4 @@
-package forestry.data.builder;
+package forestry.data.factory;
 
 import com.google.gson.JsonObject;
 import forestry.recipe.ForestryRecipes;

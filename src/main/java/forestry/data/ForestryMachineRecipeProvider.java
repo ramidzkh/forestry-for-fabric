@@ -1,6 +1,6 @@
 package forestry.data;
 
-import forestry.data.builder.CarpenterRecipeJsonFactory;
+import forestry.data.factory.CarpenterRecipeJsonFactory;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipesProvider;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;

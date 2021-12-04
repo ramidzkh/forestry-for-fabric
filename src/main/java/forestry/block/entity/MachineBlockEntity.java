@@ -5,6 +5,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.ApiStatus;
 
 public abstract class MachineBlockEntity extends BlockEntity {
 
@@ -12,7 +13,7 @@ public abstract class MachineBlockEntity extends BlockEntity {
         super(type, pos, state);
     }
 
+    @ApiStatus.OverrideOnly
     public void tick(World world, BlockPos blockPos, BlockState blockState) {
-
     }
 }

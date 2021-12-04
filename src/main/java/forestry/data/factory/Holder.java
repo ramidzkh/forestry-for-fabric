@@ -1,4 +1,4 @@
-package forestry.data.builder;
+package forestry.data.factory;
 
 class Holder<T> {
     private T object;
