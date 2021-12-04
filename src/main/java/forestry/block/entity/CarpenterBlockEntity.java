@@ -70,8 +70,8 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         inputs.readNbtList(nbt.getList("Inputs", NbtType.COMPOUND));
         outputs.readNbtList(nbt.getList("Outputs", NbtType.COMPOUND));
         fluid.variant = FluidVariant.fromNbt(nbt.getCompound("Fluid"));
-        fluid.amount = nbt.getLong("FluidQuantity");
-        energyStorage.amount = nbt.getLong("EnergyQuantity");
+        fluid.amount = nbt.getLong("FluidAmount");
+        energyStorage.amount = nbt.getLong("EnergyAmount");
     }
 
     @Override
@@ -79,7 +79,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         nbt.put("Inputs", inputs.toNbtList());
         nbt.put("Outputs", outputs.toNbtList());
         nbt.put("Fluid", fluid.variant.toNbt());
-        nbt.putLong("FluidQuantity", fluid.amount);
-        nbt.putLong("EnergyQuantity", energyStorage.amount);
+        nbt.putLong("FluidAmount", fluid.amount);
+        nbt.putLong("EnergyAmount", energyStorage.amount);
     }
 }

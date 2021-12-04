@@ -20,7 +20,7 @@ public class CarpenterRecipeJsonFactory {
 
     private int packagingTime;
     private FluidVariant fluid;
-    private long fluidQuantity;
+    private long fluidAmount;
     private Ingredient box;
     private RecipeJsonProvider recipe;
     @Nullable
@@ -31,9 +31,9 @@ public class CarpenterRecipeJsonFactory {
         return this;
     }
 
-    public CarpenterRecipeJsonFactory setFluid(FluidVariant fluid, long fluidQuantity) {
+    public CarpenterRecipeJsonFactory setFluid(FluidVariant fluid, long fluidAmount) {
         this.fluid = fluid;
-        this.fluidQuantity = fluidQuantity;
+        this.fluidAmount = fluidAmount;
         return this;
     }
 
@@ -68,18 +68,18 @@ public class CarpenterRecipeJsonFactory {
     }
 
     public void build(Consumer<RecipeJsonProvider> consumer, Identifier id) {
-        consumer.accept(new Result(id, packagingTime, fluid, fluidQuantity, box, recipe, result));
+        consumer.accept(new Result(id, packagingTime, fluid, fluidAmount, box, recipe, result));
     }
 
     private record Result(Identifier id, int packagingTime,
-                          FluidVariant fluid, long fluidQuantity,
+                          FluidVariant fluid, long fluidAmount,
                           Ingredient box, RecipeJsonProvider recipe,
                           @Nullable ItemStack result) implements RecipeJsonProvider {
-        public Result(Identifier id, int packagingTime, FluidVariant fluid, long fluidQuantity, Ingredient box, RecipeJsonProvider recipe, @Nullable ItemStack result) {
+        public Result(Identifier id, int packagingTime, FluidVariant fluid, long fluidAmount, Ingredient box, RecipeJsonProvider recipe, @Nullable ItemStack result) {
             this.id = id;
             this.packagingTime = packagingTime;
             this.fluid = fluid;
-            this.fluidQuantity = fluidQuantity;
+            this.fluidAmount = fluidAmount;
             this.box = box;
             this.recipe = recipe;
             this.result = result;
@@ -91,7 +91,7 @@ public class CarpenterRecipeJsonFactory {
 
             if (fluid != null) {
                 json.add("fluid", RecipeSerializers.serializeFluid(fluid));
-                json.addProperty("fluidQuantity", fluidQuantity);
+                json.addProperty("fluidAmount", fluidAmount);
             }
 
             json.add("box", box.toJson());
