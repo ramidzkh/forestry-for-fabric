@@ -11,9 +11,11 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import team.reborn.energy.api.EnergyStorage;
@@ -44,10 +46,6 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         this(ForestryBlockEntities.CARPENTER, pos, state);
     }
 
-    @Override
-    public void tick(World world, BlockPos blockPos, BlockState blockState) {
-    }
-
     public static void initialize() {
         // TODO: In-game configurability, thermal style?
         ItemStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> {
@@ -61,5 +59,27 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         EnergyStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> {
             return blockEntity.energyStorage;
         }, ForestryBlockEntities.CARPENTER);
+    }
+
+    @Override
+    public void tick(World world, BlockPos blockPos, BlockState blockState) {
+    }
+
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        inputs.readNbtList(nbt.getList("Inputs", NbtType.COMPOUND));
+        outputs.readNbtList(nbt.getList("Outputs", NbtType.COMPOUND));
+        fluid.variant = FluidVariant.fromNbt(nbt.getCompound("Fluid"));
+        fluid.amount = nbt.getLong("FluidQuantity");
+        energyStorage.amount = nbt.getLong("EnergyQuantity");
+    }
+
+    @Override
+    protected void writeNbt(NbtCompound nbt) {
+        nbt.put("Inputs", inputs.toNbtList());
+        nbt.put("Outputs", outputs.toNbtList());
+        nbt.put("Fluid", fluid.variant.toNbt());
+        nbt.putLong("FluidQuantity", fluid.amount);
+        nbt.putLong("EnergyQuantity", energyStorage.amount);
     }
 }
