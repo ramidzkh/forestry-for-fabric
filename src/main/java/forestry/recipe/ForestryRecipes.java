@@ -7,14 +7,15 @@ import net.minecraft.recipe.RecipeType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
-public class ForestryRecipes {
+public interface ForestryRecipes {
 
-    public static final Type<CarpenterRecipe> CARPENTER = create("carpenter", new CarpenterRecipe.Serializer());
+    Type<CarpenterRecipe> CARPENTER = create("carpenter", new CarpenterRecipe.Serializer());
 
-    public static void initialize() {
+    static void initialize() {
+        // Done in class initialization
     }
 
-    public record Type<T extends Recipe<?>>(RecipeType<T> type, RecipeSerializer<T> serializer) {
+    record Type<T extends Recipe<?>>(RecipeType<T> type, RecipeSerializer<T> serializer) {
     }
 
     private static <T extends Recipe<?>> Type<T> create(String id, RecipeSerializer<T> serializer) {

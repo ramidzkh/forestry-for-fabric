@@ -1,21 +1,27 @@
 package forestry;
 
+import forestry.block.ForestryBlocks;
+import forestry.block.entity.ForestryBlockEntities;
+import forestry.item.ForestryItems;
 import forestry.recipe.ForestryRecipes;
 import net.minecraft.util.Identifier;
 
-public class Forestry {
+public interface Forestry {
 
-    public static final String MOD_ID = "forestry";
+    String MOD_ID = "forestry";
 
-    public static Identifier id(String path) {
+    static Identifier id(String path) {
         return new Identifier(MOD_ID, path);
     }
 
-    public static Identifier id(String... path) {
+    static Identifier id(String... path) {
         return new Identifier(MOD_ID, String.join("/", path));
     }
 
-    public static void initialize() {
+    static void initialize() {
+        ForestryBlocks.initialize();
+        ForestryBlockEntities.initialize();
+        ForestryItems.initialize();
         ForestryRecipes.initialize();
     }
 }
