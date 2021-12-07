@@ -14,16 +14,23 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
 import java.util.List;
 
-public class CarpenterBlockEntity extends MachineBlockEntity {
+public class CarpenterBlockEntity extends MachineBlockEntity implements NamedScreenHandlerFactory {
 
     private final SimpleInventory inputs = new SimpleInventory(18);
     private final SimpleInventory outputs = new SimpleInventory(1);
@@ -81,5 +88,17 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         nbt.put("Fluid", fluid.variant.toNbt());
         nbt.putLong("FluidAmount", fluid.amount);
         nbt.putLong("EnergyAmount", energyStorage.amount);
+    }
+
+    @Override
+    public Text getDisplayName() {
+        return new TranslatableText(getCachedState().getBlock().getTranslationKey());
+    }
+
+    @Nullable
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+        // TODO
+        return null;
     }
 }
