@@ -3,6 +3,7 @@ package forestry.util;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 public interface FeatureRegistry {
@@ -29,5 +30,9 @@ public interface FeatureRegistry {
 
     interface Variants<T, V> {
         T get(V variant);
+
+        Collection<V> getVariants();
+
+        Collection<T> getInstances();
     }
 }

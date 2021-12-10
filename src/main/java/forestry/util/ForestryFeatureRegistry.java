@@ -8,18 +8,16 @@ import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegistry {
 
     private Identifier id(String id) {
         if (prefix.getPath().isEmpty()) {
-            return new Identifier(prefix.getNamespace(), id);
+            return new Identifier(prefix.getNamespace(), id.toLowerCase(Locale.ROOT));
         } else {
-            return new Identifier(prefix.getNamespace(), prefix.getPath() + "/" + id);
+            return new Identifier(prefix.getNamespace(), prefix.getPath() + "/" + id.toLowerCase(Locale.ROOT));
         }
     }
 
@@ -37,8 +35,12 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
     public <T extends Item, V> Variants<T, V> itemGroup(String base, Function<V, T> producer, V... variants) {
         Map<V, T> map = new HashMap<>();
 
+        if (!base.isEmpty()) {
+            base += "/";
+        }
+
         for (V variant : variants) {
-            map.put(variant, item(base + "/" + variant.toString(), producer.apply(variant)));
+            map.put(variant, item(base + variant.toString(), producer.apply(variant)));
         }
 
         return new Variants<>(map);
@@ -102,8 +104,12 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
     private <T extends Block, V> Variants<T, V> blockGroup(boolean item, String base, Function<V, T> producer, V[] variants) {
         Map<V, T> map = new HashMap<>();
 
+        if (!base.isEmpty()) {
+            base += "/";
+        }
+
         for (V variant : variants) {
-            map.put(variant, block(item, base + "/" + variant.toString(), producer.apply(variant)));
+            map.put(variant, block(item, base + variant.toString(), producer.apply(variant)));
         }
 
         return new Variants<>(map);
@@ -113,6 +119,16 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
         @Override
         public T get(V variant) {
             return Objects.requireNonNull(map.get(variant), "Variant " + variant + " not present");
+        }
+
+        @Override
+        public Collection<V> getVariants() {
+            return map.keySet();
+        }
+
+        @Override
+        public Collection<T> getInstances() {
+            return map.values();
         }
     }
 }

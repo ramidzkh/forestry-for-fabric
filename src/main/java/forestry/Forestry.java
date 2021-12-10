@@ -4,6 +4,7 @@ import forestry.block.ForestryBlocks;
 import forestry.block.entity.ForestryBlockEntities;
 import forestry.feature.Features;
 import forestry.item.ForestryItems;
+import forestry.item.ForestryTags;
 import forestry.recipe.ForestryRecipes;
 import forestry.util.ForestryFeatureRegistry;
 import net.minecraft.util.Identifier;
@@ -25,6 +26,7 @@ public interface Forestry {
     }
 
     static void initialize() {
+        ForestryTags.initialize();
         Features.initialize();
         ForestryBlocks.initialize();
         ForestryBlockEntities.initialize();

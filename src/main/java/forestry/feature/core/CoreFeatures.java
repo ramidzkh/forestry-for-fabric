@@ -1,8 +1,13 @@
 package forestry.feature.core;
 
 import forestry.Forestry;
+import forestry.feature.core.block.AnalyzerBlock;
+import forestry.feature.core.block.EscritoireBlock;
 import forestry.feature.core.item.*;
 import forestry.util.FeatureRegistry;
+import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.minecraft.block.Block;
+import net.minecraft.block.Material;
 import net.minecraft.item.Item;
 
 import java.util.function.Function;
@@ -18,9 +23,6 @@ public interface CoreFeatures {
 
     Item RESEARCH_NOTE = REGISTRY.item("research_note", settings(ResearchNoteItem::new));
     Item PORTABLE_ANALYZER = REGISTRY.item("portable_analyzer", settings(AnalyzerItem::new));
-
-    Item INGOT_TIN = REGISTRY.item("ingot_tin");
-    Item INGOT_BRONZE = REGISTRY.item("ingot_bronze");
 
     // TODO: Use a wrench tag instead?
     Item WRENCH = REGISTRY.item("wrench", settings(WrenchItem::new));
@@ -43,14 +45,12 @@ public interface CoreFeatures {
     Item GEAR_TIN = REGISTRY.item("gear_tin");
 
     Item SOLDERING_IRON = REGISTRY.item("soldering_iron", settings(SolderingIronItem::new));
-    FeatureRegistry.Variants<Item, CircuitBoardType> CIRCUIT_BOARDS = REGISTRY.itemGroup("soldering_iron", $ -> settings(Item::new), CircuitBoardType.values());
-    FeatureRegistry.Variants<Item, ElectronTube> ELECTRON_TUBES = REGISTRY.itemGroup("soldering_iron", $ -> settings(Item::new), ElectronTube.values());
+    FeatureRegistry.Variants<Item, CircuitBoardType> CIRCUIT_BOARDS = REGISTRY.itemGroup("circuit_boards", $ -> settings(Item::new), CircuitBoardType.values());
+    FeatureRegistry.Variants<Item, ElectronTube> ELECTRON_TUBES = REGISTRY.itemGroup("electron_tubes", $ -> settings(Item::new), ElectronTube.values());
 
     // TODO: Naturalist helmet???
     Item NATURALIST_HELMET = REGISTRY.item("naturalist_helmet");
 
-    // TODO: Burn time
-    Item PEAT = REGISTRY.item("peat");
     Item ASH = REGISTRY.item("ash");
     // TODO: Burn time
     Item BITUMINOUS_PEAT = REGISTRY.item("bituminous_peat");
@@ -69,6 +69,19 @@ public interface CoreFeatures {
     Item REFRACTORY_WAX = REGISTRY.item("refractory_wax");
     // TODO: Food
     FeatureRegistry.Variants<Item, Fruit> FRUITS = REGISTRY.itemGroup("fruit", $ -> settings(Item::new), Fruit.values());
+
+    Block ANALYZER = REGISTRY.block("analyzer", new AnalyzerBlock(FabricBlockSettings.of(Material.METAL)));
+    Block ESCRITOIRE = REGISTRY.block("escritoire", new EscritoireBlock(FabricBlockSettings.of(Material.METAL)));
+
+    // TODO: Burn time
+    Block PEAT = REGISTRY.block("peat");
+    Block HUMUS = REGISTRY.block("humus");
+
+    // Just don't generate bronze ore lol
+    FeatureRegistry.Variants<Block, ResourceType> RESOURCE_ORE = REGISTRY.blockGroup("ore", $ -> new Block(FabricBlockSettings.of(Material.STONE)), ResourceType.values());
+    FeatureRegistry.Variants<Block, ResourceType> RESOURCE_BLOCK = REGISTRY.blockGroup("block", $ -> new Block(FabricBlockSettings.of(Material.METAL)), ResourceType.values());
+    FeatureRegistry.Variants<Item, ResourceType> RESOURCE_INGOT = REGISTRY.itemGroup("ingot", $ -> settings(Item::new), ResourceType.values());
+    FeatureRegistry.Variants<Item, ResourceType> RESOURCE_NUGGET = REGISTRY.itemGroup("nugget", $ -> settings(Item::new), ResourceType.values());
 
     static void initialize() {
         REGISTRY.freeze();
