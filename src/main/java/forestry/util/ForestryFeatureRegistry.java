@@ -10,8 +10,9 @@ import net.minecraft.util.registry.Registry;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegistry {
+public record ForestryFeatureRegistry(Identifier prefix, Supplier<Item.Settings> defaultSettingsSupplier) implements FeatureRegistry {
 
     private Identifier id(String id) {
         if (prefix.getPath().isEmpty()) {
@@ -23,7 +24,7 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
 
     @Override
     public Item item(String id) {
-        return Registry.register(Registry.ITEM, id(id), new Item(new Item.Settings()));
+        return Registry.register(Registry.ITEM, id(id), new Item(defaultSettingsSupplier.get()));
     }
 
     @Override
@@ -85,7 +86,7 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
         Block block = Registry.register(Registry.BLOCK, id(id), new Block(FabricBlockSettings.of(Material.METAL)));
 
         if (item) {
-            Registry.register(Registry.ITEM, id(id), new BlockItem(block, new Item.Settings()));
+            Registry.register(Registry.ITEM, id(id), new BlockItem(block, defaultSettingsSupplier.get()));
         }
 
         return block;
@@ -95,7 +96,7 @@ public record ForestryFeatureRegistry(Identifier prefix) implements FeatureRegis
         Registry.register(Registry.BLOCK, id(id), value);
 
         if (item) {
-            Registry.register(Registry.ITEM, id(id), new BlockItem(value, new Item.Settings()));
+            Registry.register(Registry.ITEM, id(id), new BlockItem(value, defaultSettingsSupplier.get()));
         }
 
         return value;

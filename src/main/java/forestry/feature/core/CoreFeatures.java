@@ -5,16 +5,20 @@ import forestry.feature.core.block.AnalyzerBlock;
 import forestry.feature.core.block.EscritoireBlock;
 import forestry.feature.core.item.*;
 import forestry.util.FeatureRegistry;
+import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.Material;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
 
 import java.util.function.Function;
 
 public interface CoreFeatures {
 
-    FeatureRegistry REGISTRY = Forestry.create("");
+    ItemGroup GROUP = FabricItemGroupBuilder.build(Forestry.id("core"), () -> new ItemStack(CoreFeatures.WRENCH));
+    FeatureRegistry REGISTRY = Forestry.create("", GROUP);
 
     Item COMPOST = REGISTRY.item("compost");
     Item FERTILIZER = REGISTRY.item("fertilizer", settings(FertilizerItem::new));

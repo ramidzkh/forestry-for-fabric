@@ -173,6 +173,11 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
                 progress = Math.min(progress, recipe.packagingTime());
             }
         } else {
+            // Don't packet spam
+            if (!template.getStack(10).isEmpty()) {
+                template.setStack(10, ItemStack.EMPTY);
+            }
+
             progress = 0;
         }
     }

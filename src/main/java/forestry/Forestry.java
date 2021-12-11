@@ -7,6 +7,8 @@ import forestry.item.ForestryItems;
 import forestry.item.ForestryTags;
 import forestry.recipe.ForestryRecipes;
 import forestry.util.ForestryFeatureRegistry;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.util.Identifier;
 
 public interface Forestry {
@@ -21,8 +23,8 @@ public interface Forestry {
         return new Identifier(MOD_ID, String.join("/", path));
     }
 
-    static ForestryFeatureRegistry create(String prefix) {
-        return new ForestryFeatureRegistry(id(prefix));
+    static ForestryFeatureRegistry create(String prefix, ItemGroup group) {
+        return new ForestryFeatureRegistry(id(prefix), () -> new Item.Settings().group(group));
     }
 
     static void initialize() {
