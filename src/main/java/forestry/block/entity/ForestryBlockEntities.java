@@ -16,7 +16,7 @@ public interface ForestryBlockEntities {
     BlockEntityType<CarpenterBlockEntity> CARPENTER = register("carpenter", CarpenterBlockEntity::new, ForestryBlocks.CARPENTER);
 
     static void initialize() {
-        CarpenterBlockEntity.initialize();
+        MachineBlockEntity.initialize();
     }
 
     private static <E extends BlockEntity> BlockEntityType<E> register(String id, FabricBlockEntityTypeBuilder.Factory<E> factory, Block block, Block... blocks) {

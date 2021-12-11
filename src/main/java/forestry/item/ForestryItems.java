@@ -8,7 +8,7 @@ import net.minecraft.util.registry.Registry;
 
 public interface ForestryItems {
 
-    Item CREATIVE_ENERGY = register("creative_energy", new BlockItem(ForestryBlocks.CARPENTER, new Item.Settings()));
+    Item CREATIVE_ENERGY = register("creative_energy", new BlockItem(ForestryBlocks.CREATIVE_ENERGY, new Item.Settings()));
 
     Item CARPENTER = register("carpenter", new BlockItem(ForestryBlocks.CARPENTER, new Item.Settings()));
 

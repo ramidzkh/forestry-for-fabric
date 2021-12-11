@@ -4,6 +4,7 @@ import forestry.recipe.CarpenterRecipe;
 import forestry.recipe.ForestryRecipes;
 import forestry.util.InventoriesNonCringe;
 import forestry.util.Storages;
+import io.github.astrarre.gui.v1.api.comms.PacketKey;
 import io.github.astrarre.gui.v1.api.component.*;
 import io.github.astrarre.gui.v1.api.component.slot.ASlot;
 import io.github.astrarre.gui.v1.api.component.slot.SlotKey;
@@ -14,34 +15,40 @@ import io.github.astrarre.rendering.v1.api.plane.icon.backgrounds.ContainerBackg
 import io.github.astrarre.rendering.v1.api.space.Transform3d;
 import io.github.astrarre.rendering.v1.api.util.Axis2d;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.*;
+import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.InventoryChangedListener;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
+import team.reborn.energy.api.base.DelegatingEnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("UnstableApiUsage")
 public class CarpenterBlockEntity extends MachineBlockEntity implements InventoryChangedListener {
 
     // 3x3 crafting template + 1 box slot + 1 output slot
@@ -59,12 +66,18 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
     private final Storage<ItemVariant> inputStorage = InventoryStorage.of(inputs, null);
     private final Storage<ItemVariant> outputStorage = InventoryStorage.of(outputs, null);
     private final SingleVariantStorage<FluidVariant> fluid = Storages.fluidStorage(10 * FluidConstants.BUCKET);
-    private final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(1000, 100, 0);
+    private final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(1000, 100, 1000);
     private final Storage<ItemVariant> exposedItem = new CombinedStorage<>(List.of(
         FilteringStorage.insertOnlyOf(inputStorage),
         FilteringStorage.extractOnlyOf(outputStorage)
     ));
     private final Storage<FluidVariant> exposedFluid = FilteringStorage.insertOnlyOf(fluid);
+    private final EnergyStorage exposedEnergy = new DelegatingEnergyStorage(energyStorage, null) {
+        @Override
+        public long extract(long maxAmount, TransactionContext transaction) {
+            return 0;
+        }
+    };
 
     private int progress;
 
@@ -81,19 +94,20 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
         this(ForestryBlockEntities.CARPENTER, pos, state);
     }
 
-    public static void initialize() {
-        // TODO: In-game configurability, thermal style?
-        ItemStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> {
-            return blockEntity.exposedItem;
-        }, ForestryBlockEntities.CARPENTER);
+    // TODO: In-game configurability, thermal style?
+    @Override
+    protected Storage<ItemVariant> getItemStorage(Direction direction) {
+        return exposedItem;
+    }
 
-        FluidStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> {
-            return blockEntity.exposedFluid;
-        }, ForestryBlockEntities.CARPENTER);
+    @Override
+    protected Storage<FluidVariant> getFluidStorage(Direction direction) {
+        return exposedFluid;
+    }
 
-        EnergyStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> {
-            return blockEntity.energyStorage;
-        }, ForestryBlockEntities.CARPENTER);
+    @Override
+    protected EnergyStorage getEnergyStorage(Direction direction) {
+        return exposedEnergy;
     }
 
     @Override
@@ -113,9 +127,20 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
             // Verify we have everything for this recipe, otherwise progress = 0
             try (Transaction transaction = Transaction.openOuter()) {
                 for (int i = 0; i < 9; i++) {
-                    if (inputStorage.extract(ItemVariant.of(template.getStack(i)), 1, transaction) != 1) {
+                    ItemVariant variant = ItemVariant.of(template.getStack(i));
+
+                    if (!variant.isBlank() && inputStorage.extract(variant, 1, transaction) != 1) {
                         progress = 0;
                         return;
+                    }
+
+                    Item remainder = variant.getItem().getRecipeRemainder();
+
+                    if (remainder != null) {
+                        if (inputStorage.insert(ItemVariant.of(remainder), 1, transaction) != 1) {
+                            progress = 0;
+                            return;
+                        }
                     }
                 }
 
@@ -126,12 +151,26 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
                     return;
                 }
 
+                if (fluid.extract(recipe.fluid(), recipe.fluidAmount(), transaction) != recipe.fluidAmount()) {
+                    progress = 0;
+                    return;
+                }
+
+                // 5EU/tick
+                if (energyStorage.extract(5, transaction) != 5) {
+                    return;
+                }
+
                 // Non-transactionally increase progress, so if the output slot is blocked, progress is not lost
                 if (++progress >= recipe.packagingTime()) {
                     if (outputStorage.insert(ItemVariant.of(recipe.output()), recipe.output().getCount(), transaction) == recipe.output().getCount()) {
                         transaction.commit();
+                        markDirty();
                     }
                 }
+
+                // Don't overflow lol
+                progress = Math.min(progress, recipe.packagingTime());
             }
         } else {
             progress = 0;
@@ -173,7 +212,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
         CraftingInventory inventory = FakeCraftingInventory.of(template);
 
         for (CarpenterRecipe recipe : world.getRecipeManager().listAllOfType(ForestryRecipes.CARPENTER.type())) {
-            if (recipe.recipe().matches(inventory, world) && (!recipe.box().isEmpty() && recipe.box().test(template.getStack(9)))) {
+            if (recipe.recipe().matches(inventory, world) && (recipe.box().isEmpty() || recipe.box().test(template.getStack(9)))) {
                 return recipe;
             }
         }
@@ -196,9 +235,9 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
             templateKeys.add(key);
         }
 
-        ViewSlotKey output = new ViewSlotKey(1, 10);
-        output.link(output);
-        templateKeys.add(output);
+        ViewSlotKey outputViewKey = new ViewSlotKey(1, 10);
+        outputViewKey.link(outputViewKey);
+        templateKeys.add(outputViewKey);
 
         for (SlotKey key : playerKeys) {
             key.linkAllPre(inputKeys);
@@ -211,6 +250,8 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
 
         fluidInputKey.linkAllPre(playerKeys);
         outputKey.linkAllPre(playerKeys);
+
+        PacketKey.Int syncProgress = new PacketKey.Int(0);
 
         ServerPanel.openHandled(player, (communication, panel) -> {
             panel.darkBackground(true);
@@ -232,8 +273,12 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
                             // TODO: Arrow
                             add(new APanel() {{
                                 add(new AIcon(Icon.slot(32, 28)));
-                                add(new ASlot(communication, panel, output)
+                                add(new ASlot(communication, panel, outputViewKey)
                                     .with(Transform3d.translate(6, 7, 0)));
+                                add(new AIcon(Icon.color(0, 0, 0)) {{
+                                    // CarpenterBlockEntity$1$1$1$2$1$1.class :help_me:
+                                    communication.listen(syncProgress, view -> setIcon(Icon.color(0xFFEFF000, 2, view.getFloat("progress") * 18)));
+                                }});
                             }});
                         }}.with(Transform3d.translate(12, 0, 0)));
 
@@ -241,7 +286,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
 
                         add(new AList(Axis2d.Y) {{
                             add(new ASlot(communication, panel, fluidInputKey));
-                            add(new ASlot(communication, panel, output));
+                            add(new ASlot(communication, panel, outputKey));
                         }});
 
                         // TODO: Arrow
@@ -272,6 +317,16 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
 
             fluidInputKey.sync(communication, panel);
             outputKey.sync(communication, panel);
+
+            panel.addTickListener(() -> {
+                CarpenterRecipe recipe = findRecipe();
+
+                if (recipe != null) {
+                    communication.sendInfo(syncProgress, x -> x.putFloat("progress", this.progress / (float) recipe.packagingTime()));
+                } else {
+                    communication.sendInfo(syncProgress, x -> x.putFloat("progress", 0F));
+                }
+            });
         });
 
         return true;
