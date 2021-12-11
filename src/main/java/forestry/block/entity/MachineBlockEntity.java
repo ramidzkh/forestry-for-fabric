@@ -8,7 +8,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -50,11 +49,14 @@ public abstract class MachineBlockEntity extends BlockEntity {
     }
 
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient() && this instanceof NamedScreenHandlerFactory factory) {
-            player.openHandledScreen(factory);
+        if (openGui(player)) {
             return ActionResult.SUCCESS;
         }
 
         return ActionResult.PASS;
+    }
+
+    protected boolean openGui(PlayerEntity player) {
+        return false;
     }
 }

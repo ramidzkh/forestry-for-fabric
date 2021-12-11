@@ -6,6 +6,13 @@ plugins {
 group = "me.ramidzkh"
 version = "1.0.0-SNAPSHOT"
 
+repositories {
+    maven {
+        name = ":tiny_potato:"
+        url = uri("https://maven.tiny-potato.xyz/")
+    }
+}
+
 sourceSets {
     main {
         resources {
@@ -20,6 +27,12 @@ dependencies {
     modImplementation("net.fabricmc", "fabric-loader", "0.12.8")
 
     modImplementation("net.fabricmc.fabric-api", "fabric-api", "0.44.0+1.18")
+    modImplementation("io.github.astrarre", "astrarre-gui-v1-fabric", "1.0.7")
+    modImplementation("io.github.astrarre", "astrarre-itemview-v0-fabric", "1.0.3")
+    modImplementation("io.github.astrarre", "astrarre-hash-v0-fabric", "1.0.1")
+    modImplementation("io.github.astrarre", "astrarre-rendering-v1-fabric", "1.0.1")
+    modImplementation("io.github.astrarre", "astrarre-util-v0-fabric", "1.2.2")
+    modImplementation("io.github.astrarre", "astrarre-access-v0-fabric", "1.6.1")
     modImplementation("teamreborn", "energy", "2.0.0-beta1") {
         exclude(group = "net.fabricmc.fabric-api")
     }
