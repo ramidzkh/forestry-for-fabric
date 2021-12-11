@@ -2,15 +2,14 @@ package forestry.block.entity;
 
 import forestry.recipe.CarpenterRecipe;
 import forestry.recipe.ForestryRecipes;
+import forestry.util.InventoriesNonCringe;
 import forestry.util.Storages;
-import io.github.astrarre.gui.v1.api.component.ACenteringPanel;
-import io.github.astrarre.gui.v1.api.component.AGrid;
-import io.github.astrarre.gui.v1.api.component.AIcon;
-import io.github.astrarre.gui.v1.api.component.AList;
+import io.github.astrarre.gui.v1.api.component.*;
 import io.github.astrarre.gui.v1.api.component.slot.ASlot;
 import io.github.astrarre.gui.v1.api.component.slot.SlotKey;
 import io.github.astrarre.gui.v1.api.server.ServerPanel;
 import io.github.astrarre.itemview.v0.fabric.ItemKey;
+import io.github.astrarre.rendering.v1.api.plane.icon.Icon;
 import io.github.astrarre.rendering.v1.api.plane.icon.backgrounds.ContainerBackgroundIcon;
 import io.github.astrarre.rendering.v1.api.space.Transform3d;
 import io.github.astrarre.rendering.v1.api.util.Axis2d;
@@ -29,11 +28,11 @@ import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.inventory.*;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -43,16 +42,16 @@ import team.reborn.energy.api.base.SimpleEnergyStorage;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CarpenterBlockEntity extends MachineBlockEntity {
+public class CarpenterBlockEntity extends MachineBlockEntity implements InventoryChangedListener {
 
-    // 3x3 crafting template + 1 box slot
-    private final SimpleInventory template = new SimpleInventory(10);
+    // 3x3 crafting template + 1 box slot + 1 output slot
+    private final SimpleInventory template = new SimpleInventory(11);
 
     // 9x2 crafting inputs
     private final SimpleInventory inputs = new SimpleInventory(18);
 
     // 1 fluid input exchange slot
-    private final SimpleInventory fluidInputs = new SimpleInventory(1);
+    private final SimpleInventory fluidInput = new SimpleInventory(1);
 
     // 1 crafting output
     private final SimpleInventory outputs = new SimpleInventory(1);
@@ -71,6 +70,11 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
 
     public CarpenterBlockEntity(BlockEntityType<? extends CarpenterBlockEntity> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+
+        template.addListener(this);
+        inputs.addListener(this);
+        fluidInput.addListener(this);
+        outputs.addListener(this);
     }
 
     public CarpenterBlockEntity(BlockPos pos, BlockState state) {
@@ -101,6 +105,11 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         CarpenterRecipe recipe = findRecipe();
 
         if (recipe != null) {
+            // Don't packet spam
+            if (template.getStack(10) != recipe.output()) {
+                template.setStack(10, recipe.output());
+            }
+
             // Verify we have everything for this recipe, otherwise progress = 0
             try (Transaction transaction = Transaction.openOuter()) {
                 for (int i = 0; i < 9; i++) {
@@ -131,9 +140,9 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
 
     @Override
     public void readNbt(NbtCompound nbt) {
-        template.readNbtList(nbt.getList("Template", NbtType.COMPOUND));
+        InventoriesNonCringe.read(nbt.getCompound("Template"), template);
         inputs.readNbtList(nbt.getList("Inputs", NbtType.COMPOUND));
-        fluidInputs.readNbtList(nbt.getList("FluidInputs", NbtType.COMPOUND));
+        fluidInput.readNbtList(nbt.getList("FluidInputs", NbtType.COMPOUND));
         outputs.readNbtList(nbt.getList("Outputs", NbtType.COMPOUND));
         fluid.variant = FluidVariant.fromNbt(nbt.getCompound("Fluid"));
         fluid.amount = nbt.getLong("FluidAmount");
@@ -143,9 +152,9 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
 
     @Override
     protected void writeNbt(NbtCompound nbt) {
-        nbt.put("Template", template.toNbtList());
+        nbt.put("Template", InventoriesNonCringe.write(new NbtCompound(), template));
         nbt.put("Inputs", inputs.toNbtList());
-        nbt.put("FluidInputs", fluidInputs.toNbtList());
+        nbt.put("FluidInputs", fluidInput.toNbtList());
         nbt.put("Outputs", outputs.toNbtList());
         nbt.put("Fluid", fluid.variant.toNbt());
         nbt.putLong("FluidAmount", fluid.amount);
@@ -177,64 +186,77 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
         List<SlotKey> playerKeys = SlotKey.player(player, 0);
         List<SlotKey> templateKeys = new ArrayList<>(10);
         List<SlotKey> inputKeys = SlotKey.inv(inputs, 2);
+        SlotKey fluidInputKey = new SlotKey(fluidInput, 3, 0);
+        SlotKey outputKey = new SlotKey(outputs, 4, 0);
+        outputKey.link(outputKey);
 
         for (int i = 0; i < 10; i++) {
-            TemplateSlotKey e = new TemplateSlotKey(1, i);
-            templateKeys.add(e);
-            e.link(e);
+            TemplateSlotKey key = new TemplateSlotKey(1, i);
+            key.link(key);
+            templateKeys.add(key);
         }
+
+        ViewSlotKey output = new ViewSlotKey(1, 10);
+        output.link(output);
+        templateKeys.add(output);
 
         for (SlotKey key : playerKeys) {
             key.linkAllPre(inputKeys);
+            key.linkPre(fluidInputKey);
         }
 
         for (SlotKey key : inputKeys) {
             key.linkAllPre(playerKeys);
         }
 
+        fluidInputKey.linkAllPre(playerKeys);
+        outputKey.linkAllPre(playerKeys);
+
         ServerPanel.openHandled(player, (communication, panel) -> {
             panel.darkBackground(true);
 
-            ACenteringPanel center = new ACenteringPanel(panel);
-            panel.add(center);
+            panel.add(new ACenteringPanel(panel) {{
+                add(new AIcon(new ContainerBackgroundIcon(175, 217)));
+                add(new AList(Axis2d.Y) {{
+                    add(new AList(Axis2d.X) {{
+                        add(new AGrid(18, 3, 3) {{
+                            for (SlotKey key : templateKeys.subList(0, 9)) {
+                                add(new ASlot(communication, panel, key));
+                            }
+                        }});
 
-            center.add(new AIcon(new ContainerBackgroundIcon(175, 217)));
+                        // TODO: Arrow
 
-            AList everything = new AList(Axis2d.Y);
+                        add(new AList(Axis2d.Y) {{
+                            add(new ASlot(communication, panel, templateKeys.get(9)));
+                            // TODO: Arrow
+                            add(new APanel() {{
+                                add(new AIcon(Icon.slot(32, 28)));
+                                add(new ASlot(communication, panel, output)
+                                    .with(Transform3d.translate(6, 7, 0)));
+                            }});
+                        }}.with(Transform3d.translate(12, 0, 0)));
 
-            {
-                AList top = new AList(Axis2d.X);
+                        // TODO: Arrow
 
-                {
-                    AGrid plan = new AGrid(18, 3, 3);
+                        add(new AList(Axis2d.Y) {{
+                            add(new ASlot(communication, panel, fluidInputKey));
+                            add(new ASlot(communication, panel, output));
+                        }});
 
-                    for (SlotKey key : templateKeys.subList(0, 9)) {
-                        plan.add(new ASlot(communication, panel, key));
-                    }
+                        // TODO: Arrow
+                        // TODO: Fluid tank
+                    }});
 
-                    top.add(plan);
-                }
+                    add(new AGrid(18, 9, 2) {{
+                        for (SlotKey key : inputKeys) {
+                            add(new ASlot(communication, panel, key));
+                        }
+                    }}.with(Transform3d.translate(0, 9, 0)));
 
-                everything.add(top);
-            }
-
-            {
-                AGrid inputs = new AGrid(18, 9, 2);
-
-                for (SlotKey key : inputKeys) {
-                    inputs.add(new ASlot(communication, panel, key));
-                }
-
-                everything.add(inputs
-                    .with(Transform3d.translate(0, 9, 0)));
-            }
-
-            {
-                everything.add(ASlot.playerInv(communication, panel, playerKeys)
-                    .with(Transform3d.translate(0, 9, 0)));
-            }
-
-            center.add(everything.with(Transform3d.translate(6, 15, 0)));
+                    add(ASlot.playerInv(communication, panel, playerKeys).with(Transform3d.translate(0, 9, 0)));
+                }}.with(Transform3d.translate(6, 15, 0)));
+            }});
         }, (communication, panel) -> {
             for (SlotKey key : playerKeys) {
                 key.sync(communication, panel);
@@ -247,21 +269,45 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
             for (SlotKey key : inputKeys) {
                 key.sync(communication, panel);
             }
+
+            fluidInputKey.sync(communication, panel);
+            outputKey.sync(communication, panel);
         });
 
         return true;
     }
 
+    @Override
+    public void onInventoryChanged(Inventory sender) {
+        if (getWorld() instanceof ServerWorld) {
+            markDirty();
+        }
+    }
+
     private class TemplateSlotKey extends SlotKey {
         private final int slotIndex;
 
-        /**
-         * @param inventoryId a unique int id for this inventory, this is used to link the inventory to it's serverside counterpart
-         * @param slotIndex   the slot (index in inventory) this slot represents
-         */
         public TemplateSlotKey(int inventoryId, int slotIndex) {
             super(template, inventoryId, slotIndex);
             this.slotIndex = slotIndex;
+        }
+
+        @Override
+        public int extract(ItemKey key, int count, boolean simulate) {
+            template.setStack(slotIndex, ItemStack.EMPTY);
+            return 0;
+        }
+
+        @Override
+        public int insert(ItemKey key, int count, boolean simulate) {
+            template.setStack(slotIndex, key.createItemStack(1));
+            return 0;
+        }
+    }
+
+    private class ViewSlotKey extends SlotKey {
+        public ViewSlotKey(int inventoryId, int slotIndex) {
+            super(template, inventoryId, slotIndex);
         }
 
         @Override
@@ -271,7 +317,6 @@ public class CarpenterBlockEntity extends MachineBlockEntity {
 
         @Override
         public int insert(ItemKey key, int count, boolean simulate) {
-            template.setStack(slotIndex, key.createItemStack(1));
             return 0;
         }
     }
