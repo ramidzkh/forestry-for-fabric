@@ -1,5 +1,8 @@
 package forestry.block.entity;
 
+import forestry.client.gui.OutputSlotKey;
+import forestry.client.gui.TemplateSlotKey;
+import forestry.client.gui.ViewSlotKey;
 import forestry.recipe.CarpenterRecipe;
 import forestry.recipe.ForestryRecipes;
 import forestry.util.InventoriesNonCringe;
@@ -9,7 +12,6 @@ import io.github.astrarre.gui.v1.api.component.*;
 import io.github.astrarre.gui.v1.api.component.slot.ASlot;
 import io.github.astrarre.gui.v1.api.component.slot.SlotKey;
 import io.github.astrarre.gui.v1.api.server.ServerPanel;
-import io.github.astrarre.itemview.v0.fabric.ItemKey;
 import io.github.astrarre.rendering.v1.api.plane.icon.Icon;
 import io.github.astrarre.rendering.v1.api.plane.icon.backgrounds.ContainerBackgroundIcon;
 import io.github.astrarre.rendering.v1.api.space.Transform3d;
@@ -231,16 +233,16 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
         List<SlotKey> templateKeys = new ArrayList<>(10);
         List<SlotKey> inputKeys = SlotKey.inv(inputs, 2);
         SlotKey fluidInputKey = new SlotKey(fluidInput, 3, 0);
-        SlotKey outputKey = new SlotKey(outputs, 4, 0);
+        SlotKey outputKey = new OutputSlotKey(outputs, 4, 0);
         outputKey.link(outputKey);
 
         for (int i = 0; i < 10; i++) {
-            TemplateSlotKey key = new TemplateSlotKey(1, i);
+            TemplateSlotKey key = new TemplateSlotKey(template, 1, i);
             key.link(key);
             templateKeys.add(key);
         }
 
-        ViewSlotKey outputViewKey = new ViewSlotKey(1, 10);
+        ViewSlotKey outputViewKey = new ViewSlotKey(template, 1, 10);
         outputViewKey.link(outputViewKey);
         templateKeys.add(outputViewKey);
 
@@ -262,7 +264,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
             panel.darkBackground(true);
 
             panel.add(new ACenteringPanel(panel) {{
-                add(new AIcon(new ContainerBackgroundIcon(175, 217)));
+                add(new AIcon(new ContainerBackgroundIcon(176, 218)));
                 add(new AList(Axis2d.Y) {{
                     add(new AList(Axis2d.X) {{
                         add(new AGrid(18, 3, 3) {{
@@ -305,7 +307,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
                     }}.with(Transform3d.translate(0, 9, 0)));
 
                     add(ASlot.playerInv(communication, panel, playerKeys).with(Transform3d.translate(0, 9, 0)));
-                }}.with(Transform3d.translate(6, 15, 0)));
+                }}.with(Transform3d.translate(0, 19, 0)));
             }});
         }, (communication, panel) -> {
             for (SlotKey key : playerKeys) {
@@ -341,43 +343,6 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
     public void onInventoryChanged(Inventory sender) {
         if (getWorld() instanceof ServerWorld) {
             markDirty();
-        }
-    }
-
-    private class TemplateSlotKey extends SlotKey {
-        private final int slotIndex;
-
-        public TemplateSlotKey(int inventoryId, int slotIndex) {
-            super(template, inventoryId, slotIndex);
-            this.slotIndex = slotIndex;
-        }
-
-        @Override
-        public int extract(ItemKey key, int count, boolean simulate) {
-            template.setStack(slotIndex, ItemStack.EMPTY);
-            return 0;
-        }
-
-        @Override
-        public int insert(ItemKey key, int count, boolean simulate) {
-            template.setStack(slotIndex, key.createItemStack(1));
-            return 0;
-        }
-    }
-
-    private class ViewSlotKey extends SlotKey {
-        public ViewSlotKey(int inventoryId, int slotIndex) {
-            super(template, inventoryId, slotIndex);
-        }
-
-        @Override
-        public int extract(ItemKey key, int count, boolean simulate) {
-            return 0;
-        }
-
-        @Override
-        public int insert(ItemKey key, int count, boolean simulate) {
-            return 0;
         }
     }
 
