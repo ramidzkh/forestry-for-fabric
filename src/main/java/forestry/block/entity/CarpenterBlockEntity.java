@@ -1,5 +1,6 @@
 package forestry.block.entity;
 
+import forestry.client.gui.FluidTank;
 import forestry.client.gui.OutputSlotKey;
 import forestry.client.gui.TemplateSlotKey;
 import forestry.client.gui.ViewSlotKey;
@@ -12,10 +13,12 @@ import io.github.astrarre.gui.v1.api.component.*;
 import io.github.astrarre.gui.v1.api.component.slot.ASlot;
 import io.github.astrarre.gui.v1.api.component.slot.SlotKey;
 import io.github.astrarre.gui.v1.api.server.ServerPanel;
+import io.github.astrarre.itemview.v0.fabric.FabricViews;
 import io.github.astrarre.rendering.v1.api.plane.icon.Icon;
 import io.github.astrarre.rendering.v1.api.plane.icon.backgrounds.ContainerBackgroundIcon;
 import io.github.astrarre.rendering.v1.api.space.Transform3d;
 import io.github.astrarre.rendering.v1.api.util.Axis2d;
+import io.github.astrarre.util.v0.api.Val;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
@@ -23,6 +26,7 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -259,6 +263,7 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
         outputKey.linkAllPre(playerKeys);
 
         PacketKey.Int syncProgress = new PacketKey.Int(0);
+        PacketKey.Int syncFluid = new PacketKey.Int(1);
 
         ServerPanel.openHandled(player, (communication, panel) -> {
             panel.darkBackground(true);
@@ -297,7 +302,10 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
                         }});
 
                         // TODO: Arrow
-                        // TODO: Fluid tank
+                        add(new FluidTank(fluid.getCapacity(), new ResourceAmount<>(fluid.variant, fluid.amount)) {{
+                            setBounds(20, 60);
+                            communication.listen(syncFluid, view -> setFluid(new ResourceAmount<>(FluidVariant.fromNbt(view.getTag("Fluid").toTag()), view.getLong("Amount"))));
+                        }});
                     }});
 
                     add(new AGrid(18, 9, 2) {{
@@ -325,14 +333,22 @@ public class CarpenterBlockEntity extends MachineBlockEntity implements Inventor
             fluidInputKey.sync(communication, panel);
             outputKey.sync(communication, panel);
 
+            Val<Float> progressTracker = new Val<>();
+            Val<ResourceAmount<FluidVariant>> fluidTracker = new Val<>();
+
+            progressTracker.addListener((old, current) -> communication.sendInfo(syncProgress, x -> x.putFloat("progress", current)));
+            fluidTracker.addListener((old, current) -> communication.sendInfo(syncFluid, x -> x.putTag("Fluid", FabricViews.view(fluid.variant.toNbt())).putLong("Amount", fluid.amount)));
+
             panel.addTickListener(() -> {
                 CarpenterRecipe recipe = findRecipe();
 
                 if (recipe != null) {
-                    communication.sendInfo(syncProgress, x -> x.putFloat("progress", this.progress / (float) recipe.packagingTime()));
+                    progressTracker.set(progress / (float) recipe.packagingTime());
                 } else {
-                    communication.sendInfo(syncProgress, x -> x.putFloat("progress", 0F));
+                    progressTracker.set(0F);
                 }
+
+                fluidTracker.set(new ResourceAmount<>(fluid.variant, fluid.amount));
             });
         });
 

@@ -27,12 +27,12 @@ sourceSets {
 }
 
 dependencies {
-    minecraft("net.minecraft", "minecraft", "1.18")
-    mappings("net.fabricmc", "yarn", "1.18+build.1", classifier = "v2")
-    modImplementation("net.fabricmc", "fabric-loader", "0.12.8")
+    minecraft("net.minecraft", "minecraft", "1.18.1")
+    mappings("net.fabricmc", "yarn", "1.18.1+build.2", classifier = "v2")
+    modImplementation("net.fabricmc", "fabric-loader", "0.12.11")
 
     modImplementation("net.fabricmc.fabric-api", "fabric-api", "0.44.0+1.18")
-    modImplementation("io.github.astrarre", "astrarre-gui-v1-fabric", "1.0.9")
+    modImplementation("io.github.astrarre", "astrarre-gui-v1-fabric", "1.0.14")
     modImplementation("teamreborn", "energy", "2.0.0-beta1") {
         exclude(group = "net.fabricmc.fabric-api")
     }
