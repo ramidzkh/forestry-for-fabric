@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "MinecraftServerMixin",
-    "accessor.MinecraftServerAccessor"
+    "accessor.MinecraftServerAccessor",
+    "accessor.SimpleInventoryAccessor"
   ],
   "client": [
     "accessor.MinecraftClientAccessor",
